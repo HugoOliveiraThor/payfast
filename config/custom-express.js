@@ -11,9 +11,10 @@ module.exports = function() {
 
     app.use(bodyParser.json());
 
-    
+
     consign()
         .include('routes')
+        .then('persistence')
         .into(app);
 
     return app;
