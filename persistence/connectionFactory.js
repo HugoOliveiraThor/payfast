@@ -5,7 +5,7 @@ function createDBConnection() {
         host: 'localhost',
         user: 'root',
         password: '',
-        database: 'payfast'
+        database: 'r13'
     });
 
 }
