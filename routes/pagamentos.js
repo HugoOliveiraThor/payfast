@@ -7,6 +7,18 @@ module.exports = function(app) {
         res.send('ok');
     });
     app.post('/pagamentos/pagamento', function(req, res) {
+        req.assert('forma_de_pagamento', 'Forma de pagamento é obrigatório').notEmpty();
+        req.assert('valor', 'Valor é obrigatório e deve ser um decimal').notEmpty().isFloat();
+
+        var erros = req.validationErrors();
+
+        if (erros) {
+            console.log('Erros de validação encontrados');
+            res.status(400).send(erros);
+            return;
+        }
+
+
         var pagamento = req.body;
         console.log('Processamento a requisicao de um novo pagamento');
         pagamento.status = 'CRIADO';
@@ -18,7 +30,14 @@ module.exports = function(app) {
 
         pagamentoDao.salva(pagamento, function(error, resultado) {
             console.log('Pagamento criado');
-            res.json(pagamento);
+            if (error) {
+                console.log('INSERT | Pagamentos | Error' + error);
+                res.status(400).send(error);
+            } else {
+                res.location('/pagamentos/pagamento/' + resultado.insertId);
+                res.status(201).json(pagamento)
+            }
+
         });
     });
 }
