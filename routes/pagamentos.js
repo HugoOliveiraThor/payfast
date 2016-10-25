@@ -1,14 +1,14 @@
 /**
  * Created by hugooliveira on 02/10/16.
  */
-module.exports = function(app) {
-    app.get('/pagamentos', function(req, res) {
+module.exports = function (app) {
+    app.get('/pagamentos', function (req, res) {
         console.log('Requisicao na porta 3000')
         res.send('ok');
     });
 
 
-    app.post('/pagamentos/pagamento', function(req, res) {
+    app.post('/pagamentos/pagamento', function (req, res) {
 
         req.assert('pagamento.forma_de_pagamento', 'Forma de pagamento é obrigatório').notEmpty();
         req.assert('pagamento.valor', 'Valor é obrigatório e deve ser um decimal').notEmpty().isFloat();
@@ -21,14 +21,18 @@ module.exports = function(app) {
             return;
         }
         var pagamento = req.body['pagamento'];
+
+
         console.log('Processamento a requisicao de um novo pagamento');
         pagamento.status = 'CRIADO';
         pagamento.data = new Date;
 
+
+
         var connection = app.persistence.connectionFactory();
         var pagamentoDao = new app.persistence.PagamentoDao(connection);
 
-        pagamentoDao.salva(pagamento, function(error, resultado) {
+        pagamentoDao.salva(pagamento, function (error, resultado) {
             console.log('Pagamento criado');
             if (error) {
                 console.log('INSERT | Pagamentos | Error' + error);
@@ -38,35 +42,46 @@ module.exports = function(app) {
 
                 if (pagamento.forma_de_pagamento == 'cartao') {
                     var cartao = req.body['cartao'];
-                    console.log('Cartao log', cartao)
-                    res.status(201).json(cartao);
-                    return;
-                }
-                res.location('/pagamentos/pagamento/' + pagamento.id);
 
-                var response = {
-                    dados_do_pagamento: pagamento,
-                    links: [{
+
+                    var clientesCartoes = new app.servicos.clienteCartoes();
+                    clientesCartoes.autoriza(cartao, function (exception, request, response, retorno) {
+                        console.log('Retorno cartão', retorno);
+                        res.status(201).json(retorno);
+                        return;
+
+                    });
+
+
+
+                }else{
+                    res.location('/pagamentos/pagamento/' + pagamento.id);
+
+                    var response = {
+                        dados_do_pagamento: pagamento,
+                        links: [{
                             href: 'http://localhost:3000/pagamentos/pagamento/' + pagamento.id,
                             rel: 'confirmar',
                             method: 'PUT'
                         },
-                        {
-                            href: 'http://localhost:3000/pagamentos/pagamento/' + pagamento.id,
-                            rel: 'cancelar',
-                            method: 'DELETE'
-                        },
-                    ]
+                            {
+                                href: 'http://localhost:3000/pagamentos/pagamento/' + pagamento.id,
+                                rel: 'cancelar',
+                                method: 'DELETE'
+                            },
+                        ]
+                    }
+                    res.status(201).json(response);
+                    //STATUS CODE = 201 = Created ;
                 }
 
-                res.status(201).json(response);
-                //STATUS CODE = 201 = Created ;
+
             }
 
         });
     });
 
-    app.put('/pagamentos/pagamento/:id', function(req, res) {
+    app.put('/pagamentos/pagamento/:id', function (req, res) {
         var pagamento = {};
         var id = req.params.id;
 
@@ -76,7 +91,7 @@ module.exports = function(app) {
         var connection = app.persistence.connectionFactory();
         var pagamentoDao = new app.persistence.PagamentoDao(connection);
 
-        pagamentoDao.atualiza(pagamento, function(error) {
+        pagamentoDao.atualiza(pagamento, function (error) {
             if (error) {
                 res.status(500).send(error);
                 return
@@ -87,7 +102,7 @@ module.exports = function(app) {
 
     });
 
-    app.delete('/pagamentos/pagamento/:id', function(req, res) {
+    app.delete('/pagamentos/pagamento/:id', function (req, res) {
         var pagamento = {};
         var id = req.params.id;
 
@@ -98,7 +113,7 @@ module.exports = function(app) {
         var connection = app.persistence.connectionFactory();
         var pagamentoDao = new app.persistence.PagamentoDao(connection);
 
-        pagamentoDao.atualiza(pagamento, function(error) {
+        pagamentoDao.atualiza(pagamento, function (error) {
             if (error) {
                 res.status(500).send(500);
                 return;
