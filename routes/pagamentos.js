@@ -28,7 +28,6 @@ module.exports = function (app) {
         pagamento.data = new Date;
 
 
-
         var connection = app.persistence.connectionFactory();
         var pagamentoDao = new app.persistence.PagamentoDao(connection);
 
@@ -42,19 +41,19 @@ module.exports = function (app) {
 
                 if (pagamento.forma_de_pagamento == 'cartao') {
                     var cartao = req.body['cartao'];
+                    console.log(cartao);
 
 
-                    var clientesCartoes = new app.servicos.clienteCartoes();
-                    clientesCartoes.autoriza(cartao, function (exception, request, response, retorno) {
-                        console.log('Retorno cartão', retorno);
+                    var clienteCartoes = new app.servicos.clienteCartoes();
+                    clienteCartoes.autoriza(cartao, function (exception, request, response, retorno) {
+
                         res.status(201).json(retorno);
                         return;
 
                     });
 
 
-
-                }else{
+                } else {
                     res.location('/pagamentos/pagamento/' + pagamento.id);
 
                     var response = {
@@ -120,7 +119,7 @@ module.exports = function (app) {
             }
             console.log('Pagamento cancelado');
             res.status(204).send(pagamento);
-            //STATUS CODE = 204 - Requisicao feita com sucesso , porém não tem nada para retornar . 
+            //STATUS CODE = 204 - Requisicao feita com sucesso , porém não tem nada para retornar .
         })
 
     })

@@ -9,6 +9,7 @@ function CartoesClient(){
 }
 
 CartoesClient.prototype.autoriza = function(cartao,callback){
+    console.log('Entrou',cartao);
     this._cliente.post('/cartoes/autoriza', cartao,callback);
 }
 
